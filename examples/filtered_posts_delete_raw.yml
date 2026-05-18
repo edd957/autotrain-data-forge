@@ -22,3 +22,11 @@ llm:
   model: gpt-4.1-mini
   api_key_env: OPENAI_API_KEY
   endpoint: https://api.openai.com/v1/chat/completions
+base_model:
+  provider: huggingface
+  model_id: sentence-transformers/all-MiniLM-L6-v2
+  display_name: MiniLM retrieval embeddings
+  task: retrieval
+  license_name: apache-2.0
+  precision: auto
+  trust_remote_code: false
