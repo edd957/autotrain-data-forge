@@ -13,6 +13,7 @@ AutoTrain Data Forge is designed for authorized data collection and local AI tra
 - Image collection produces a rights-review finding and enforces a maximum download size.
 - Cleanup policies delete only local files created by the job.
 - LLM API keys are read from environment variables and are never written to job files.
+- Base model configuration is reviewed for unknown license, path traversal, missing remote API key environment variables, and `trust_remote_code`.
 
 ## Responsible Use
 
@@ -26,6 +27,7 @@ The project should not be used for:
 - bypassing access controls, CAPTCHAs, paywalls, API limits, or robots.txt;
 - scraping authenticated accounts without explicit permission;
 - building datasets from copyrighted or personal data without a lawful basis;
+- loading unreviewed remote model code or redistributing model weights without respecting their license;
 - deleting or modifying data on remote websites.
 
 ## Reporting Issues
