@@ -28,13 +28,13 @@ class SafeCrawler:
     def crawl(self, dry_run: bool = False) -> CrawlResult:
         findings = review_job(self.job, self.workspace)
         if has_blocking_findings(findings):
-            warnings = [f"{finding.code}: {finding.message}" for finding in findings]
+            blocked_warnings = [f"{finding.code}: {finding.message}" for finding in findings]
             return CrawlResult(
                 pages_seen=0,
                 pages_saved=0,
                 images_saved=0,
                 output_dir=self.output_dir,
-                warnings=warnings,
+                warnings=blocked_warnings,
             )
         if dry_run:
             return CrawlResult(
