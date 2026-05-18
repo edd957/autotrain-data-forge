@@ -37,7 +37,7 @@ def render_ui() -> str:
       border-radius: 8px;
       padding: 18px;
     }
-    textarea, pre, input {
+    textarea, pre, input, select {
       box-sizing: border-box;
       width: 100%;
       border: 1px solid #c6ceda;
@@ -46,7 +46,7 @@ def render_ui() -> str:
       line-height: 1.5;
     }
     textarea { min-height: 220px; padding: 12px; resize: vertical; }
-    input { padding: 9px 10px; margin-bottom: 10px; }
+    input, select { padding: 9px 10px; margin-bottom: 10px; }
     button {
       border: 0;
       border-radius: 6px;
@@ -82,6 +82,8 @@ def render_ui() -> str:
         <button onclick="parsePrompt()">Parse</button>
         <button class="secondary" onclick="reviewJob()">Review</button>
       </div>
+      <h2 style="margin-top:18px">Base model</h2>
+      <select id="baseModel"></select>
       <h2 style="margin-top:18px">Query</h2>
       <input id="modelDir" value="data/jobs/llm-planned-job/model" />
       <input id="question" value="What is in this dataset?" />
@@ -94,9 +96,22 @@ def render_ui() -> str:
   </main>
   <script>
     let currentJob = null;
+    let baseModels = [];
     const output = document.getElementById("output");
     function write(value) {
       output.textContent = JSON.stringify(value, null, 2);
+    }
+    async function loadBaseModels() {
+      const response = await fetch("/v1/base-models");
+      baseModels = await response.json();
+      const select = document.getElementById("baseModel");
+      select.innerHTML = "";
+      for (const model of baseModels) {
+        const option = document.createElement("option");
+        option.value = model.model_id;
+        option.textContent = `${model.display_name} (${model.provider})`;
+        select.appendChild(option);
+      }
     }
     async function parsePrompt() {
       const prompt = document.getElementById("prompt").value;
@@ -107,6 +122,11 @@ def render_ui() -> str:
       });
       const data = await response.json();
       currentJob = data.job;
+      const selected = baseModels.find(
+        (model) => model.model_id === document.getElementById("baseModel").value
+      );
+      if (selected) currentJob.base_model = selected;
+      data.job = currentJob;
       write(data);
     }
     async function reviewJob() {
@@ -130,6 +150,7 @@ def render_ui() -> str:
       });
       write(await response.json());
     }
+    loadBaseModels();
   </script>
 </body>
 </html>"""
