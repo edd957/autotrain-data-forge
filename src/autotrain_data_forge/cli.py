@@ -25,7 +25,7 @@ def init_job(path: Path) -> None:
         goal="Collect public documentation text for a local assistant.",
         seeds=["https://example.com/"],
         allowed_domains=["example.com"],
-        output_dir="data/jobs/example-authorized-site",
+        output_dir=Path("data/jobs/example-authorized-site"),
     )
     write_job(path, job)
     console.print(f"Created job template at [bold]{path}[/bold]")
