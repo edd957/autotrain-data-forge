@@ -1,0 +1,39 @@
+name: open-source-base-model-demo
+goal: Collect authorized documentation text and prepare it for a selected open-source model.
+seeds:
+  - https://example.com/
+allowed_domains:
+  - example.com
+include_text: true
+include_images: false
+include_text_patterns: []
+exclude_text_patterns: []
+include_url_patterns: []
+max_pages: 10
+max_depth: 1
+rate_limit_seconds: 1.0
+respect_robots_txt: true
+output_dir: data/jobs/open-source-base-model-demo
+cleanup_policy: retain
+llm:
+  provider: none
+  model: none
+  api_key_env: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
+base_model:
+  provider: huggingface
+  model_id: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  display_name: TinyLlama chat base
+  task: text_generation
+  revision: null
+  local_path: null
+  endpoint: null
+  api_key_env: null
+  license_name: apache-2.0
+  precision: int4
+  context_window: 2048
+  parameters: 1.1B
+  trust_remote_code: false
+  notes:
+    - Review the model license and hardware requirements before adaptation.
+  extra_config: {}
