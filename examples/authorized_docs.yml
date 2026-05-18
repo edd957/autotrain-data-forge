@@ -1,0 +1,22 @@
+name: authorized-docs-demo
+goal: Collect public documentation text for a local searchable assistant.
+seeds:
+  - https://example.com/
+allowed_domains:
+  - example.com
+include_text: true
+include_images: false
+include_text_patterns: []
+exclude_text_patterns: []
+include_url_patterns: []
+max_pages: 10
+max_depth: 1
+rate_limit_seconds: 1.0
+respect_robots_txt: true
+output_dir: data/jobs/authorized-docs-demo
+cleanup_policy: retain
+llm:
+  provider: none
+  model: none
+  api_key_env: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
