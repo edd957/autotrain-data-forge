@@ -109,9 +109,7 @@ class SafeCrawler:
             self.job.include_text_patterns, searchable
         ):
             return False
-        if self._any_pattern_matches(self.job.exclude_text_patterns, searchable):
-            return False
-        return True
+        return not self._any_pattern_matches(self.job.exclude_text_patterns, searchable)
 
     def _any_pattern_matches(self, patterns: list[str], value: str) -> bool:
         for pattern in patterns:
