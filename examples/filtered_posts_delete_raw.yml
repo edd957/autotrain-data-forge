@@ -1,0 +1,24 @@
+name: filtered-posts-delete-raw
+goal: Collect only pages that mention the reviewed keyword, train locally, then delete raw local files.
+seeds:
+  - https://example.com/
+allowed_domains:
+  - example.com
+include_text: true
+include_images: false
+include_text_patterns:
+  - "reviewed-keyword"
+exclude_text_patterns:
+  - "do-not-collect"
+include_url_patterns: []
+max_pages: 25
+max_depth: 2
+rate_limit_seconds: 1.5
+respect_robots_txt: true
+output_dir: data/jobs/filtered-posts-delete-raw
+cleanup_policy: delete_raw_after_training
+llm:
+  provider: openai_compatible
+  model: gpt-4.1-mini
+  api_key_env: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
