@@ -9,7 +9,10 @@ from autotrain_data_forge import __version__
 from autotrain_data_forge.api.ui import render_ui
 from autotrain_data_forge.crawler import SafeCrawler
 from autotrain_data_forge.llm import parse_request_heuristic, parse_request_with_llm
+from autotrain_data_forge.model_catalog import list_base_models
 from autotrain_data_forge.schemas import (
+    BaseModelConfig,
+    BaseModelTask,
     CrawlResult,
     HarvestJob,
     ParsePromptRequest,
@@ -43,6 +46,11 @@ def ui() -> str:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "version": __version__}
+
+
+@app.get("/v1/base-models", response_model=list[BaseModelConfig])
+def base_models(task: BaseModelTask | None = None) -> list[BaseModelConfig]:
+    return list_base_models(task)
 
 
 @app.post("/v1/parse-request", response_model=ParsedRequest)
