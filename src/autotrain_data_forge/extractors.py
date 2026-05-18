@@ -21,14 +21,17 @@ def extract_page(html: str, base_url: str) -> ExtractedPage:
     title = soup.title.string.strip() if soup.title and soup.title.string else ""
     text = " ".join(soup.get_text(" ").split())
     links = [
-        urljoin(base_url, anchor.get("href"))
+        urljoin(base_url, href)
         for anchor in soup.find_all("a")
-        if anchor.get("href")
+        if (href := _string_attribute(anchor.get("href")))
     ]
     images = [
-        urljoin(base_url, image.get("src"))
+        urljoin(base_url, src)
         for image in soup.find_all("img")
-        if image.get("src")
+        if (src := _string_attribute(image.get("src")))
     ]
     return ExtractedPage(title=title, text=text, links=links, images=images)
 
+
+def _string_attribute(value: object) -> str:
+    return value if isinstance(value, str) else ""
