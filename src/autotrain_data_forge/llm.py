@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 
-from autotrain_data_forge.schemas import HarvestJob, LLMProviderConfig, ParsedRequest
+from autotrain_data_forge.schemas import CleanupPolicy, HarvestJob, LLMProviderConfig, ParsedRequest
 
 
 URL_PATTERN = re.compile(r"https?://[^\s,\"')>]+")
@@ -16,7 +17,11 @@ def parse_request_heuristic(prompt: str) -> ParsedRequest:
     urls = [url.rstrip(".,;]") for url in URL_PATTERN.findall(prompt)]
     domains = sorted({urlparse(url).hostname or "" for url in urls})
     include_images = any(word in prompt.lower() for word in ["image", "images", "photo", "photos"])
-    cleanup_policy = "delete_raw_after_training" if "delete" in prompt.lower() else "retain"
+    cleanup_policy = (
+        CleanupPolicy.DELETE_RAW_AFTER_TRAINING
+        if "delete" in prompt.lower()
+        else CleanupPolicy.RETAIN
+    )
     quoted_filters = re.findall(r'"([^"]+)"|' + r"'([^']+)'", prompt)
     include_text_patterns = [
         value
@@ -33,7 +38,7 @@ def parse_request_heuristic(prompt: str) -> ParsedRequest:
         include_text_patterns=include_text_patterns,
         max_pages=25,
         max_depth=1,
-        output_dir="data/jobs/llm-planned-job",
+        output_dir=Path("data/jobs/llm-planned-job"),
         cleanup_policy=cleanup_policy,
     )
     notes = ["Heuristic parser used. Review domains, rights, and dataset scope before crawling."]
