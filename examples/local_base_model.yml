@@ -1,0 +1,39 @@
+name: local-base-model-demo
+goal: Collect authorized documentation text and prepare it for a local base model path.
+seeds:
+  - https://example.com/
+allowed_domains:
+  - example.com
+include_text: true
+include_images: false
+include_text_patterns: []
+exclude_text_patterns: []
+include_url_patterns: []
+max_pages: 10
+max_depth: 1
+rate_limit_seconds: 1.0
+respect_robots_txt: true
+output_dir: data/jobs/local-base-model-demo
+cleanup_policy: retain
+llm:
+  provider: none
+  model: none
+  api_key_env: OPENAI_API_KEY
+  endpoint: https://api.openai.com/v1/chat/completions
+base_model:
+  provider: local_path
+  model_id: local-custom-model
+  display_name: Local custom model
+  task: text_generation
+  revision: null
+  local_path: models/local-custom-model
+  endpoint: null
+  api_key_env: null
+  license_name: local-user-provided
+  precision: auto
+  context_window: null
+  parameters: null
+  trust_remote_code: false
+  notes:
+    - Keep local model files out of git and document their license separately.
+  extra_config: {}
