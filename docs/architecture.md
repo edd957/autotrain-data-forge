@@ -8,9 +8,10 @@ flowchart LR
     B --> C["Security review"]
     C --> D["Safe crawler"]
     D --> E["Raw dataset"]
-    E --> F["Local trainer"]
+    M["Optional base model"] --> F["Local trainer"]
+    E --> F
     F --> G["Retrieval model"]
-    F --> H["Manifest and training card"]
+    F --> H["Manifest, base model plan, and training card"]
     G --> I["CLI and API query"]
 ```
 
@@ -19,6 +20,7 @@ flowchart LR
 - `schemas.py` defines the public job, review, crawl, training, and query contracts.
 - `llm.py` converts natural-language requests into draft jobs using a local heuristic parser or an OpenAI-compatible chat endpoint with a user-owned API key.
 - `security.py` blocks high-risk targets such as localhost, private IP ranges, unsupported schemes, disabled robots.txt, and unsafe output paths.
+- `model_catalog.py` provides built-in base model examples and lets users define their own base model metadata in YAML.
 - `crawler.py` performs respectful crawling with domain allowlists, robots.txt checks, rate limits, text filters, URL filters, and bounded image downloads.
 - `training.py` builds a local TF-IDF retrieval index from collected text and image metadata.
 - `retrieval.py` queries the trained model without sending data to a remote provider.
@@ -38,13 +40,14 @@ data/jobs/example/
 |   |-- documents.json
 |   |-- matrix.joblib
 |   `-- vectorizer.joblib
+|-- base_model_plan.json
 |-- dataset_manifest.json
 `-- training_card.md
 ```
 
 ## Training Strategy
 
-The default trainer intentionally uses a lightweight retrieval model. That makes the first release easy to run on Linux, macOS, and Windows without GPUs. The architecture leaves room for future trainers such as sentence embeddings, LoRA fine-tuning, image captioning, and multimodal dataset exporters.
+The default trainer intentionally uses a lightweight retrieval model. That makes the first release easy to run on Linux, macOS, and Windows without GPUs. Jobs may select a base model for downstream adaptation, and the trainer records that choice without automatically loading unreviewed external model code. The architecture leaves room for future trainers such as sentence embeddings, LoRA fine-tuning, image captioning, and multimodal dataset exporters.
 
 ## Deployment Modes
 
