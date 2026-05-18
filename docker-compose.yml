@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8020:8020"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    env_file:
+      - .env
+
