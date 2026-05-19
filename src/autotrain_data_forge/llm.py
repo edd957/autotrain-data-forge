@@ -7,7 +7,14 @@ from urllib.parse import urlparse
 
 import httpx
 
-from autotrain_data_forge.schemas import CleanupPolicy, HarvestJob, LLMProviderConfig, ParsedRequest
+from autotrain_data_forge.model_catalog import list_base_models
+from autotrain_data_forge.schemas import (
+    BaseModelConfig,
+    CleanupPolicy,
+    HarvestJob,
+    LLMProviderConfig,
+    ParsedRequest,
+)
 
 
 URL_PATTERN = re.compile(r"https?://[^\s,\"')>]+")
@@ -28,6 +35,19 @@ def parse_request_heuristic(prompt: str) -> ParsedRequest:
         for first, second in quoted_filters
         if (value := first or second) and not value.startswith("http")
     ]
+    prompt_lower = prompt.lower()
+    base_model = next(
+        (
+            model
+            for model in list_base_models()
+            if model.model_id != "none"
+            and (
+                model.model_id.lower() in prompt_lower
+                or model.display_name.lower() in prompt_lower
+            )
+        ),
+        BaseModelConfig(),
+    )
     job = HarvestJob(
         name="llm-planned-job",
         goal=prompt[:300],
@@ -40,6 +60,7 @@ def parse_request_heuristic(prompt: str) -> ParsedRequest:
         max_depth=1,
         output_dir=Path("data/jobs/llm-planned-job"),
         cleanup_policy=cleanup_policy,
+        base_model=base_model,
     )
     notes = ["Heuristic parser used. Review domains, rights, and dataset scope before crawling."]
     return ParsedRequest(job=job, notes=notes)
@@ -54,7 +75,8 @@ def parse_request_with_llm(prompt: str, config: LLMProviderConfig) -> ParsedRequ
         "Respect robots.txt, use allowlisted domains, and never suggest bypassing access controls. "
         "Return concise JSON fields: name, goal, seeds, allowed_domains, "
         "include_images, max_pages, "
-        "max_depth, output_dir, cleanup_policy, include_text_patterns, exclude_text_patterns."
+        "max_depth, output_dir, cleanup_policy, include_text_patterns, exclude_text_patterns, "
+        "base_model."
     )
     response = httpx.post(
         config.endpoint,
