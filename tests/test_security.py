@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from autotrain_data_forge.schemas import HarvestJob
+from autotrain_data_forge.schemas import BaseModelConfig, HarvestJob
 from autotrain_data_forge.security import has_blocking_findings, review_job
 
 
@@ -33,3 +33,22 @@ def test_review_blocks_output_path_escape(tmp_path: Path) -> None:
     findings = review_job(job, tmp_path)
 
     assert any(finding.code == "UNSAFE_OUTPUT_PATH" for finding in findings)
+
+
+def test_review_flags_unreviewed_base_model_code() -> None:
+    job = HarvestJob(
+        name="remote-code",
+        goal="Collect public text from a safe site.",
+        seeds=["https://example.com/"],
+        allowed_domains=["example.com"],
+        base_model=BaseModelConfig(
+            provider="huggingface",
+            model_id="example/needs-code",
+            display_name="Needs remote code",
+            trust_remote_code=True,
+        ),
+    )
+
+    findings = review_job(job)
+
+    assert any(finding.code == "BASE_MODEL_REMOTE_CODE" for finding in findings)
