@@ -24,3 +24,5 @@ def test_trainer_writes_manifest_and_model(tmp_path: Path) -> None:
     assert (result.model_dir / "vectorizer.joblib").exists()
     assert result.dataset_manifest.exists()
     assert result.training_card.exists()
+    assert result.base_model_plan is not None
+    assert result.base_model_plan.exists()
