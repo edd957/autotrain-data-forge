@@ -17,6 +17,51 @@ class LLMProviderConfig(BaseModel):
     endpoint: str = "https://api.openai.com/v1/chat/completions"
 
 
+class BaseModelProvider(StrEnum):
+    NONE = "none"
+    HUGGINGFACE = "huggingface"
+    LOCAL_PATH = "local_path"
+    OLLAMA = "ollama"
+    OPENAI_COMPATIBLE = "openai_compatible"
+    CUSTOM = "custom"
+
+
+class BaseModelTask(StrEnum):
+    RETRIEVAL = "retrieval"
+    TEXT_GENERATION = "text_generation"
+    IMAGE_GENERATION = "image_generation"
+    AUDIO_GENERATION = "audio_generation"
+    VIDEO_GENERATION = "video_generation"
+    MULTIMODAL = "multimodal"
+
+
+class ModelPrecision(StrEnum):
+    AUTO = "auto"
+    FP32 = "fp32"
+    FP16 = "fp16"
+    BF16 = "bf16"
+    INT8 = "int8"
+    INT4 = "int4"
+
+
+class BaseModelConfig(BaseModel):
+    provider: BaseModelProvider = BaseModelProvider.NONE
+    model_id: str = "none"
+    display_name: str = "No external base model"
+    task: BaseModelTask = BaseModelTask.RETRIEVAL
+    revision: str | None = None
+    local_path: Path | None = None
+    endpoint: str | None = None
+    api_key_env: str | None = None
+    license_name: str | None = None
+    precision: ModelPrecision = ModelPrecision.AUTO
+    context_window: int | None = Field(default=None, ge=1)
+    parameters: str | None = None
+    trust_remote_code: bool = False
+    notes: list[str] = Field(default_factory=list)
+    extra_config: dict[str, str] = Field(default_factory=dict)
+
+
 class HarvestJob(BaseModel):
     name: str = Field(min_length=2, max_length=80)
     goal: str = Field(min_length=10)
@@ -34,6 +79,7 @@ class HarvestJob(BaseModel):
     output_dir: Path = Path("data/jobs/default")
     cleanup_policy: CleanupPolicy = CleanupPolicy.RETAIN
     llm: LLMProviderConfig = Field(default_factory=LLMProviderConfig)
+    base_model: BaseModelConfig = Field(default_factory=BaseModelConfig)
 
     @field_validator("allowed_domains")
     @classmethod
@@ -60,6 +106,7 @@ class TrainingResult(BaseModel):
     model_dir: Path
     dataset_manifest: Path
     training_card: Path
+    base_model_plan: Path | None = None
 
 
 class ParsedRequest(BaseModel):
