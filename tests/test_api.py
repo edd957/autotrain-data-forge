@@ -22,3 +22,12 @@ def test_ui_endpoint() -> None:
 
     assert response.status_code == 200
     assert "AutoTrain Data Forge" in response.text
+
+
+def test_base_models_endpoint() -> None:
+    client = TestClient(app)
+
+    response = client.get("/v1/base-models?task=text_generation")
+
+    assert response.status_code == 200
+    assert any(model["provider"] != "none" for model in response.json())
