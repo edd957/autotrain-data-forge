@@ -4,7 +4,12 @@ import ipaddress
 from pathlib import Path
 from urllib.parse import urlparse
 
-from autotrain_data_forge.schemas import CleanupPolicy, HarvestJob, SecurityFinding
+from autotrain_data_forge.schemas import (
+    BaseModelProvider,
+    CleanupPolicy,
+    HarvestJob,
+    SecurityFinding,
+)
 
 
 def review_job(job: HarvestJob, workspace: Path | None = None) -> list[SecurityFinding]:
@@ -15,6 +20,7 @@ def review_job(job: HarvestJob, workspace: Path | None = None) -> list[SecurityF
     _review_output_path(job, workspace, findings)
     _review_limits(job, findings)
     _review_collection_policy(job, findings)
+    _review_base_model(job, workspace, findings)
     return findings
 
 
@@ -148,3 +154,64 @@ def _review_collection_policy(job: HarvestJob, findings: list[SecurityFinding]) 
             )
         )
 
+
+def _review_base_model(
+    job: HarvestJob,
+    workspace: Path,
+    findings: list[SecurityFinding],
+) -> None:
+    base = job.base_model
+    if base.provider == BaseModelProvider.NONE:
+        return
+    if base.trust_remote_code:
+        findings.append(
+            SecurityFinding(
+                severity="high",
+                code="BASE_MODEL_REMOTE_CODE",
+                message="Base model requires trust_remote_code; review model code before use.",
+            )
+        )
+    if not base.license_name:
+        findings.append(
+            SecurityFinding(
+                severity="medium",
+                code="BASE_MODEL_LICENSE_UNKNOWN",
+                message="Base model license is not declared.",
+            )
+        )
+    if base.provider == BaseModelProvider.LOCAL_PATH:
+        if base.local_path is None:
+            findings.append(
+                SecurityFinding(
+                    severity="medium",
+                    code="BASE_MODEL_PATH_MISSING",
+                    message="Local base model provider requires local_path.",
+                )
+            )
+            return
+        if ".." in base.local_path.parts:
+            findings.append(
+                SecurityFinding(
+                    severity="high",
+                    code="BASE_MODEL_PATH_ESCAPE",
+                    message="Local base model path must not contain parent directory traversal.",
+                )
+            )
+        if not base.local_path.is_absolute():
+            resolved = (workspace / base.local_path).resolve()
+            if workspace.resolve() not in resolved.parents and resolved != workspace.resolve():
+                findings.append(
+                    SecurityFinding(
+                        severity="high",
+                        code="BASE_MODEL_WORKSPACE_ESCAPE",
+                        message=f"Local base model path resolves outside workspace: {resolved}",
+                    )
+                )
+    if base.provider == BaseModelProvider.OPENAI_COMPATIBLE and not base.api_key_env:
+        findings.append(
+            SecurityFinding(
+                severity="medium",
+                code="BASE_MODEL_API_KEY_ENV_MISSING",
+                message="Remote base model provider is enabled but api_key_env is empty.",
+            )
+        )
