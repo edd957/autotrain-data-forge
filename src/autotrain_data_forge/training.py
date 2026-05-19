@@ -8,7 +8,12 @@ import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from autotrain_data_forge.io import read_jsonl
-from autotrain_data_forge.schemas import CleanupPolicy, HarvestJob, TrainingResult
+from autotrain_data_forge.schemas import (
+    BaseModelProvider,
+    CleanupPolicy,
+    HarvestJob,
+    TrainingResult,
+)
 
 
 class LocalTrainer:
@@ -46,6 +51,7 @@ class LocalTrainer:
         )
         manifest_path = self.output_dir / "dataset_manifest.json"
         training_card_path = self.output_dir / "training_card.md"
+        base_model_plan_path = self.output_dir / "base_model_plan.json"
         manifest_path.write_text(
             json.dumps(
                 {
@@ -53,10 +59,15 @@ class LocalTrainer:
                     "documents": len(documents),
                     "raw_pages": len(pages),
                     "image_references": len(image_records),
+                    "base_model": self.job.base_model.model_dump(mode="json"),
                 },
                 indent=2,
                 ensure_ascii=False,
             ),
+            encoding="utf-8",
+        )
+        base_model_plan_path.write_text(
+            json.dumps(self._base_model_plan(), indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
         training_card_path.write_text(self._training_card(len(documents)), encoding="utf-8")
@@ -66,22 +77,46 @@ class LocalTrainer:
             model_dir=self.model_dir,
             dataset_manifest=manifest_path,
             training_card=training_card_path,
+            base_model_plan=base_model_plan_path,
         )
 
     def _training_card(self, documents: int) -> str:
+        base = self.job.base_model
         return (
             f"# Training Card: {self.job.name}\n\n"
             f"- Goal: {self.job.goal}\n"
             f"- Documents: {documents}\n"
             f"- Seeds: {', '.join(self.job.seeds)}\n"
             f"- Allowed domains: {', '.join(self.job.allowed_domains)}\n"
+            f"- Base model: {base.display_name} (`{base.provider.value}:{base.model_id}`)\n"
+            f"- Base model task: {base.task.value}\n"
+            f"- Base model license: {base.license_name or 'not declared'}\n"
             f"- Cleanup policy: {self.job.cleanup_policy.value}\n\n"
-            "This model is a local retrieval index trained from user-authorized data.\n"
+            "The default output is a local retrieval index trained from user-authorized data. "
+            "If a base model is configured, review the base model plan before fine-tuning or "
+            "adapting it with external tooling.\n"
         )
+
+    def _base_model_plan(self) -> dict[str, object]:
+        base = self.job.base_model
+        return {
+            "selected_base_model": base.model_dump(mode="json"),
+            "default_trainer": "local_tfidf_retrieval",
+            "integration_status": (
+                "No external base model is loaded by the default trainer."
+                if base.provider == BaseModelProvider.NONE
+                else "Base model selected for downstream adaptation/export."
+            ),
+            "operator_review": [
+                "Verify model license before training or redistribution.",
+                "Confirm hardware requirements and quantization settings.",
+                "Keep trust_remote_code disabled unless the model code has been reviewed.",
+                "Do not upload private collected data to remote model providers without consent.",
+            ],
+        }
 
     def _cleanup(self) -> None:
         if self.job.cleanup_policy == CleanupPolicy.DELETE_RAW_AFTER_TRAINING:
             shutil.rmtree(self.output_dir / "raw", ignore_errors=True)
         if self.job.cleanup_policy == CleanupPolicy.DELETE_ALL_AFTER_TRAINING:
             shutil.rmtree(self.output_dir, ignore_errors=True)
-
